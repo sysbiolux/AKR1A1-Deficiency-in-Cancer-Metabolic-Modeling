@@ -1,417 +1,93 @@
-# AKR1A1-Deficiency-in-Cancer-Metabolic-Modeling
+# FASTCORMICS 5-code pipeline
 
-Genome-scale metabolic modeling workflow investigating AKR1A1 deficiency as a metabolic vulnerability in renal cell carcinoma (RCC) and hepatocellular carcinoma (HCC).
+## Main MATLAB files
 
-This repository provides the computational framework developed to investigate how AKR1A1 loss reshapes cancer metabolic networks through the integration of transcriptomic data with genome-scale metabolic reconstructions.
+1. `pipeline_config.m`  (configuration; must be named exactly this)
+2. `01_geo_gse62944_generate_TCGA_tables.m`
+3. `02_prepare_expression_data.m`
+4. `03_build_fastcormics_models.m`
+5. `04_run_model_analysis.m`
 
-AKR1A1 deficiency promotes metabolic rewiring associated with altered glycolytic regulation, methylglyoxal-associated glycation stress, and adaptive metabolic states. To characterize these changes at the systems level, RNA-seq datasets from AKR1A1-deficient cancer cell-line models and TCGA patient tumors were analyzed.
-
-The workflow enables reconstruction and comparison of AKR1A1-deficient and AKR1A1-expressing metabolic models to identify altered metabolic pathways, flux distributions, and potential metabolic vulnerabilities.
-
-This repository integrates cancer cell-line and TCGA patient tumor RNA-seq data with rFASTCORMICS/Recon3D-based genome-scale metabolic reconstruction, medium-specific constraints, FBA, FVA, flux sampling, flux-sum analysis, and IDARE/Cytoscape visualization.
-
----
-
-# PUBLICATION
-
-**Crosstalk between S-nitrosylation and glycation defines a novel metabolic vulnerability in liver and renal cancers**
-
-Chiara Pecorari, Mojca Bratina, Evelyn Gonzalez, Salvatore Rizza, Letizia Incampo, Lina Vardouli, Paola Giglio, Zsófia Márta Sztupinszki, Perrine Verdys, Mario Presti, Maria Pires Pacheco, Yuya Qiu, Trine Skov Petersen, Julie Lund Petersen, Yonglun Luo, Emmanuelle Bignon, Zoltan Szallasi, Marco Donia, Jonathan S. Stamler, Simone Cardaci, Thomas Sauter, Giuseppe Filomeni
-
-**Status**
-
-Accepted in *Nature Communications*
-
----
-
-# SUMMARY
-
-Metabolic reprogramming is a defining feature of cancer and contributes to therapy resistance.
-
-This study investigates how loss of **aldo-keto reductase family 1 member A1 (AKR1A1)** rewires metabolism in:
-
-- renal cell carcinoma (RCC)
-- hepatocellular carcinoma (HCC)
-
-AKR1A1 deficiency alters glycolytic metabolism through the crosstalk between:
-
-- S-nitrosylation-dependent metabolic regulation
-- methylglyoxal-associated glycation stress
-
-leading to metabolic adaptations associated with NRF2 activation, chemoresistance, and tumor progression.
-
-This repository provides the computational workflow used to reconstruct and analyze genome-scale metabolic models of AKR1A1 deficiency.
-
----
-
-# METHOD OVERVIEW
-
-The computational framework integrates transcriptomic datasets with genome-scale metabolic modeling to identify AKR1A1-dependent metabolic alterations.
-
-The workflow includes:
-
-## Data preprocessing
-
-- RNA-seq data processing
-- expression distribution assessment
-- PCA analysis
-- TPM/FPKM normalization
-- gene-length correction
-- AKR1A1 expression-based patient stratification
-
----
-
-## Context-specific model reconstruction
-
-Genome-scale metabolic models were reconstructed using:
-
-- rFASTCORMICS
-- Recon3D human metabolic reconstruction
-
-
-Models were generated from:
-
-- TCGA patient tumor RNA-seq data
-- AKR1A1-deficient cancer cell-line RNA-seq data
-
----
-
-## Medium constraints
-
-Experimental medium conditions were incorporated:
-
-**RPMI**
-
-- renal cancer models
-- 769-P cell-line models
-
-**DMEM**
-
-- liver cancer models
-- Huh7 cell-line models
-
----
-
-## Metabolic simulations
-
-The reconstructed models were analyzed using:
-
-- Flux Balance Analysis (FBA)
-- Flux Variability Analysis (FVA)
-- FVA interval similarity analysis
-- single-gene deletion simulations
-- drug perturbation simulations
-- flux sampling
-- flux-sum analysis
-
-Altered metabolic pathways were visualized using:
-
-- IDARE
-- Cytoscape
-
----
-
-# DATASETS
-
-## TCGA patient RNA-seq data
-
-Patient-derived metabolic models were reconstructed using TCGA RNA-seq data.
-
-GEO accession:
+## Folder structure
 
 ```text
-GSE62944
+AKR1A1_TCGA_high_low/
+├── pipeline_config.m
+├── 01_geo_gse62944_generate_TCGA_tables.m
+├── 02_prepare_expression_data.m
+├── 03_build_fastcormics_models.m
+├── 04_run_model_analysis.m
+├── data/
+│   ├── raw_TCGA/
+│   │   ├── GSE62944_06_01_15_TCGA_24_CancerType_Samples.txt
+│   │   ├── GSM1536837_06_01_15_TCGA_24.tumor_Rsubread_FPKM.txt
+│   │   └── GSM1697009_06_01_15_TCGA_24.normal_Rsubread_FPKM.txt
+│   ├── raw_cell_lines/
+│   │   ├── GSE310784/
+│   │   │   └── 769-p/
+│   │   │       ├── 769P_project_1_normalizedCountsWithAnnotations.txt
+│   │   │       └── 769P_project_1_sampleAttributes.csv
+│   │   └── GSE310828/
+│   │       └── HuH7/
+│   │           ├── Huh7_project_1_normalizedCountsWithAnnotations.txt
+│   │           └── Huh7_project_1_sampleAttributes.csv
+│   ├── cancer_expression_TCGA/   generated by code 01
+│   ├── high_low/                 generated by code 01
+│   ├── model/
+│   │   ├── consistent_model.mat
+│   │   └── dico2columns.mat
+│   ├── medium/
+│   │   ├── medium_DMEM_H.xlsx
+│   │   └── medium_RPMI_7.xlsx
+│   └── drug/
+│       └── GeneDrugRelationsUpdate.mat
+└── results/
 ```
 
-Cancer cohorts analyzed:
+## Run TCGA only
 
-- **KIRC** — kidney renal clear cell carcinoma
-- **KIRP** — kidney renal papillary cell carcinoma
-- **KICH** — kidney chromophobe carcinoma
-- **LIHC** — liver hepatocellular carcinoma
-
-For each cancer type, tumors were stratified according to AKR1A1 mRNA expression.
-
-```text
-AKR1A1 HIGH / ON = upper expression quartile
-
-AKR1A1 LOW / OFF = lower expression quartile
-```
-
-Generated TCGA metabolic models:
-
-```text
-KIRC_ON      vs      KIRC_OFF
-
-KIRP_ON      vs      KIRP_OFF
-
-KICH_ON      vs      KICH_OFF
-
-LIHC_ON      vs      LIHC_OFF
-```
-
----
-
-## Cancer cell-line RNA-seq data
-
-Experimental AKR1A1-deficient models were generated from:
-
-- 769-P renal cancer cells
-- Huh7 hepatocellular carcinoma cells
-
-Conditions:
-
-```text
-Control
-
-AKR1A1-deficient clone sc1
-
-AKR1A1-deficient clone sc2
-
-AKR1A1-deficient clone sc12
-```
-
-GEO accessions:
-
-```text
-GSE310784
-
-GSE310828
-```
-
----
-
-# PREREQUISITES
-
-## Software environment
-
-The workflow was developed and tested using:
-
-- MATLAB R2019b
-- COBRA Toolbox
-- rFASTCORMICS
-- IBM ILOG CPLEX Optimizer
-- Recon3D metabolic reconstruction
-
----
-
-# INSTALLATION
-
-## COBRA Toolbox
-
-Install COBRA Toolbox:
-
-https://opencobra.github.io/cobratoolbox/latest/installation.html
-
-Initialize in MATLAB:
+Edit `pipeline_config.m`:
 
 ```matlab
-initCobraToolbox(false)
+cfg.runMode = 'TCGA';
 ```
 
-Check installation:
+Then run, one by one:
 
 ```matlab
-which optimizeCbModel
-which fluxVariability
+cfg = pipeline_config;
+run('01_geo_gse62944_generate_TCGA_tables.m')
+run('02_prepare_expression_data.m')
+run('03_build_fastcormics_models.m')
+run('04_run_model_analysis.m')
 ```
 
----
+## Run cell lines only
 
-# rFASTCORMICS
-
-Install rFASTCORMICS:
-
-https://github.com/sysbiolux/rFASTCORMICS
-
-Add to MATLAB path:
+Edit `pipeline_config.m`:
 
 ```matlab
-addpath(genpath('path_to_rFASTCORMICS'))
-savepath
+cfg.runMode = 'CELL_LINES';
 ```
 
-Check:
+Then run:
 
 ```matlab
-which fastcormics_RNAseq
+cfg = pipeline_config;
+run('02_prepare_expression_data.m')
+run('03_build_fastcormics_models.m')
+run('04_run_model_analysis.m')
 ```
 
----
-
-# Solver
-
-CPLEX is recommended.
-
-Activate solver:
-
-```matlab
-changeCobraSolver('ibm_cplex','all')
-```
-
-Check:
-
-```matlab
-getCobraSolver
-```
-
----
-
-# WORKFLOW
-
-The repository follows the complete computational pipeline from transcriptomic preprocessing to metabolic pathway interpretation.
+Cell-line paths are fixed to your structure:
 
 ```text
-RNA-seq datasets
-        |
-        v
-Data preprocessing
-        |
-        v
-Genome-scale model reconstruction
-        |
-        v
-Medium constraints
-        |
-        v
-Metabolic simulations
-        |
-        v
-Flux sampling
-        |
-        v
-Flux-sum statistics
-        |
-        v
-IDARE/Cytoscape visualization
+data/raw_cell_lines/GSE310784/769-p/
+data/raw_cell_lines/GSE310828/HuH7/
 ```
 
----
+## GEO sources
 
-## 1. TCGA data preparation
-
-Purpose:
-
-- extract KIRC, KIRP, KICH, and LIHC datasets
-- classify patients according to AKR1A1 expression
-- generate HIGH/LOW groups
-
----
-
-## 2. Transcriptomic preprocessing
-
-Module:
-
-```text
-Data driver
-```
-
-Purpose:
-
-- import TCGA and cell-line RNA-seq data
-- process gene annotations
-- normalize expression values
-- generate rFASTCORMICS input files
-
----
-
-## 3. Genome-scale model reconstruction
-
-Module:
-
-```text
-Model driver
-```
-
-Purpose:
-
-- reconstruct context-specific metabolic models
-- generate patient-derived TCGA models
-- generate AKR1A1-deficient cell-line models
-
----
-
-## 4. Medium-specific constraints
-
-Module:
-
-```text
-Medium constraint workflow
-```
-
-Purpose:
-
-Apply experimentally defined medium constraints and validate model feasibility.
-
----
-
-## 5. Metabolic analysis
-
-Module:
-
-```text
-Universal analysis workflow
-```
-
-Includes:
-
-- FBA
-- FVA
-- FVA similarity analysis
-- single-gene deletion
-- drug perturbation analysis
-
----
-
-## 6. Flux sampling
-
-Purpose:
-
-Explore feasible metabolic flux distributions across biological conditions.
-
-Comparisons:
-
-- AKR1A1 HIGH vs LOW patient models
-- Control vs AKR1A1-deficient cell-line models
-
----
-
-## 7. Flux-sum statistics
-
-Includes:
-
-- metabolite turnover analysis
-- Wilcoxon statistical testing
-- signal-to-noise calculation
-- pathway prioritization
-
----
-
-## 8. Network visualization
-
-Differential metabolic pathways are visualized using:
-
-- IDARE
-- Cytoscape
-
----
-
-# DETAILED REPRODUCIBILITY GUIDE
-
-Complete MATLAB execution instructions, driver descriptions, configuration options, input/output files, and validation tests are available in:
-
-```text
-docs/USER_GUIDE.md
-```
-
----
-
-# CITATION
-
-If you use this workflow, please cite:
-
-**Crosstalk between S-nitrosylation and glycation defines a novel metabolic vulnerability in liver and renal cancers**
-
-*Nature Communications*
-
-Associated Zenodo DOI will be provided with the archived release.
+- TCGA data: GSE62944
+- 769-P cell-line data: GSE310784
+- Huh7 cell-line data: GSE310828
