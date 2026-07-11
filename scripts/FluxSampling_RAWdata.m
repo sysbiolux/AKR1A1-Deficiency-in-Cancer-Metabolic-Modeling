@@ -1,20 +1,47 @@
-%% FluxSampling_RAWdata.m
-% FluxSampling_RAWdata ? flux sampling statistics from RAW data
-% Run flux sampling analysis using 1500 sampled flux distributions.
-%
+%% FluxSampling_RAW.m
+% Flux sampling analysis of AKR1A1-deficient metabolic models.
 % This script performs flux sampling comparison analysis for:
 %   - 769-P models
 %   - HuH7 models
-%
-% The analysis compares control and AKR1A1-deficient models,
-% performs FBA/FVA calculations, computes reaction-level statistics,
-% and exports the results as Excel files.
-%
-% Required input files:
+%% Required input files:
 %   consistent_model.mat
 %   SamplingResults_medium_1500_model_1.mat ... model_8.mat
 %   samplingResults_medium_KO_GLO1_1500_model_1.mat ... model_8.mat
-
+%
+% This script compares feasible flux distributions between control and
+% AKR1A1-deficient genome-scale metabolic models.
+%
+% The workflow performs:
+%   1. Loading of previously sampled metabolic models.
+%   2. Flux Balance Analysis (FBA).
+%   3. Flux Variability Analysis (FVA).
+%   4. Mapping of sampled fluxes to the reference Recon3D model.
+%   5. Statistical comparison of flux distributions.
+%   6. Identification of altered metabolic reactions and pathways.
+%   7. Export of complete and pathway-specific result tables.
+%
+% Input:
+%   consistent_model.mat
+%       Reference consistent metabolic reconstruction.
+%
+%   SamplingResults_*.mat
+%       Flux sampling results generated for each condition.
+%
+% Output:
+%   Excel tables containing:
+%       - reaction flux statistics
+%       - fold-change values
+%       - significance scores
+%       - pathway-specific results
+%
+% Requirements:
+%   MATLAB 
+%   COBRA Toolbox
+%   IBM CPLEX solver
+%
+% Associated study:
+%   AKR1A1 deficiency metabolic modeling workflow.
+%%
 
 clear
 close all
@@ -28,6 +55,12 @@ changeCobraSolver('ibm_cplex');
 performAnalysisGSE1500(1,2:4,'769-P');
 performAnalysisGSE1500(5,6:8,'Huh7');
 
+%% Run TCGA cancer-type comparisons
+% Model pairs:
+%   KIRC: model 1 versus model 2
+%   KIRP: model 3 versus model 4
+%   KICH: model 5 versus model 6
+%   LIHC: model 7 versus model 8
 
 function performAnalysisGSE1500(ctrl,treatments,model_prefix_str)
 
@@ -46,6 +79,8 @@ function performAnalysisGSE1500(ctrl,treatments,model_prefix_str)
 
 
 %% Load reference model
+% Load the consistent reference reconstruction used to align reactions
+% across all sampled TCGA models.
 
 load('consistent_model.mat')
 
@@ -55,7 +90,9 @@ cutoffFluxDiff = 100;
 
 rxnsOfInterest = model_orig.rxns;
 
-
+%% Standardize selected reaction identifiers
+% Harmonize selected reaction IDs before mapping sampled-model reactions
+% to the reference reconstruction.
 % Standardize reaction identifiers to match the reference model.
 model_orig.rxns(find(contains(model_orig.rxns,'CREATt4_2_r'))) = cellstr('CREATt4_2_r');
 model_orig.rxns(find(contains(model_orig.rxns,'CREATt4_2'))) = cellstr('CREATt4_2');
@@ -63,13 +100,17 @@ model_orig.rxns(find(contains(model_orig.rxns,'ABUTt4_2'))) = cellstr('ABUTt4_2'
 model_orig.rxns(find(contains(model_orig.rxns,'SRTNt6_2'))) = cellstr('SRTNt6_2');
 model_orig.rxns(find(contains(model_orig.rxns,'GLYBt4_2'))) = cellstr('GLYBt4_2');
 %%
+%% Process control-versus-treatment model pairs
+% The outer loops iterate through the selected model indices.
+% The inner loop loads both the medium and KO_GLO1 sampling conditions.
+%%
 for i = 1:numel(ctrl)
     for j = 1:numel(treatments)
         treatmentNames = {'medium','KO_GLO1'};
-        % Construct filename based on cell line, control and treatment
+        % Construct input filenames for the current model pair and condition.
         for k = 1:numel(treatmentNames)
             treatmentName = treatmentNames{k};
-            
+            % Load flux-sampling results for the standard medium condition.
             if treatmentName == "medium"
                 disp (treatmentName)
                 fileA_medium = ['SamplingResults_medium_1500_model_' num2str(ctrl(i)) '.mat'];
@@ -82,7 +123,7 @@ for i = 1:numel(ctrl)
                 model2_medium = x.modelSampling;
                 data2_medium = x.samples(:, 1:1500);
                 disp(['... model & data loading done for control ' num2str(i) ' and treatment ' num2str(j) ' cellLine medium' model_prefix_str]);
-                
+            % Load flux-sampling results for the GLO1-knockout condition.
             elseif treatmentName == "KO_GLO1"
                 disp (treatmentName)
                 fileA_KO = ['samplingResults_medium_' treatmentName '_1500_model_' num2str(ctrl(i)) '.mat'];
@@ -105,6 +146,8 @@ for i = 1:numel(ctrl)
         
         
         %% medium
+        %% FBA and FVA: standard medium condition
+        % Set the biomass reaction as the model objective for both models.
         % Perform analysis for model 1,2
         % Set objective for biomass reaction
         model1_medium.c = zeros(numel(model1_medium.c), 1);
@@ -141,7 +184,8 @@ for i = 1:numel(ctrl)
          [minFlux_B_medium, maxFlux_B_medium] = fluxVariability(model2_medium, 90); % Adjust the number of samples
         
         %% KO
-        
+        %% FBA and FVA: GLO1-knockout condition
+        % Set the biomass reaction as the model objective for both models.
         % Perform analysis for model 1,2
         % Set objective for biomass reaction
         model1_KO.c = zeros(numel(model1_KO.c), 1);
@@ -176,6 +220,14 @@ for i = 1:numel(ctrl)
          [minFlux_B_KO, maxFlux_B_KO] = fluxVariability(model2_KO, 90); % Adjust the number of samples
 
     %% mapping to original model
+    %% Map results to the reference model
+    % Align sampled-model reactions with the reference reaction list.
+    %
+    % Model A:
+    %   control/reference model
+    %
+    % Model B:
+    %   comparison model
     %A
     [C1m,IA1m,IB1m] = intersect(model_orig.rxns,model1_medium.rxns,'stable'); %medium 1
     
@@ -319,10 +371,6 @@ for i = 1:numel(ctrl)
     statst_medium=array2table(stats_medium,'RowNames',model_orig.rxns,'VariableNames',{'meanA','meanB','stdA','stdB','diff','log2FC','SNR','pValue','-log2_p'});
     % Create a table with columns A, B, and direction_change
     statst_medium.direction_change=direction_change_m;
-    
-    
-    
-    
     
     %% statistical test KO
     stats_KO=[];
