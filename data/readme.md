@@ -74,3 +74,5 @@ The metabolic reconstructions use the experimental culture media employed in the
   - LIHC TCGA models
 
 Medium compositions are provided in the repository and are applied before FBA, FVA, and flux sampling.
+
+Note: Raw RNA-seq datasets are not redistributed in this repository. Users should download the original GEO datasets and place them in the expected data/raw/ directories before running the preprocessing scripts.
