@@ -1,187 +1,224 @@
 # AKR1A1-Deficiency-in-Cancer-Metabolic-Modeling
 
-Genome-scale metabolic modeling workflow investigating AKR1A1 deficiency as a metabolic vulnerability in renal cell carcinoma and hepatocellular carcinoma.  
+Genome-scale metabolic modeling workflow investigating AKR1A1 deficiency as a metabolic vulnerability in renal cell carcinoma (RCC) and hepatocellular carcinoma (HCC).
 
-AKR1A1 deficiency promotes a metabolic state associated with altered glycolytic regulation, methylglyoxal-associated glycation stress, and adaptive metabolic rewiring. To characterize these changes at the systems level, transcriptomic data from cancer cell-line models and TCGA patient tumors were integrated with genome-scale metabolic reconstructions.
+AKR1A1 deficiency promotes a metabolic state associated with altered glycolytic regulation, methylglyoxal-associated glycation stress, and adaptive metabolic rewiring. To characterize these changes at the systems level, transcriptomic data from cancer cell lines and TCGA patient tumors were integrated with genome-scale metabolic reconstructions.
 
-The workflow enables the generation and comparison of AKR1A1-deficient and AKR1A1-expressing metabolic models, supporting the identification of altered metabolic pathways, flux distributions, and potential metabolic vulnerabilities.
-
-This repository integrates cancer cell-line and TCGA patient tumor RNA-seq data with rFASTCORMICS/Recon3D-based genome-scale metabolic reconstruction, medium-specific constraints, FBA, FVA, flux sampling, flux-sum analysis, and IDARE/Cytoscape visualization.
+The repository provides a reproducible computational workflow for RNA-seq preprocessing, context-specific metabolic model reconstruction, medium constraint application, metabolic simulations, flux sampling, statistical analyses, and pathway visualization.
 
 ---
 
-## PUBLICATION
+# Publication
 
 # Crosstalk between S-nitrosylation and glycation defines a novel metabolic vulnerability in liver and renal cancers
 
 Chiara Pecorari, Mojca Bratina, Evelyn Gonzalez, Salvatore Rizza, Letizia Incampo, Lina Vardouli, Paola Giglio, Zsófia Márta Sztupinszki, Perrine Verdys, Mario Presti, Maria Pires Pacheco, Yuya Qiu, Trine Skov Petersen, Julie Lund Petersen, Yonglun Luo, Emmanuelle Bignon, Zoltan Szallasi, Marco Donia, Jonathan S. Stamler, Simone Cardaci, Thomas Sauter, Giuseppe Filomeni
 
-**Status**
-
-Accepted in *Nature Communications*
+**Nature Communications acepted**
 
 ---
 
-## SUMMARY
+# Project Summary
 
-Metabolic reprogramming is a defining feature of cancer and contributes to therapy resistance.
+Metabolic reprogramming is a defining feature of cancer and contributes to tumor progression, therapy resistance, and adaptation to oxidative stress.
 
-This study investigates how loss of **aldo-keto reductase family 1 member A1 (AKR1A1)** rewires metabolism in:
+This repository investigates how AKR1A1 deficiency remodels cellular metabolism in:
 
-- renal cell carcinoma (RCC)
-- hepatocellular carcinoma (HCC)
+- Renal cell carcinoma (RCC)
+- Hepatocellular carcinoma (HCC)
 
-AKR1A1 deficiency alters glycolytic metabolism through the crosstalk between:
+using genome-scale metabolic modeling guided by transcriptomic data.
 
-- S-nitrosylation-dependent metabolic regulation
-- methylglyoxal-associated glycation stress
+Two complementary datasets are analyzed:
 
-leading to metabolic adaptations associated with NRF2 activation, chemoresistance, and tumor progression.
+- Experimental RNA-seq from AKR1A1 knockdown cancer cell lines.
+- TCGA patient tumor RNA-seq stratified according to AKR1A1 expression.
 
-This repository provides the computational workflow used to reconstruct and analyze genome-scale metabolic models of AKR1A1 deficiency.
-
----
-
-## METHOD OVERVIEW
-
-The computational framework integrates transcriptomic datasets with genome-scale metabolic modeling to identify AKR1A1-dependent metabolic alterations.
-
-The workflow includes:
-
-## Data preprocessing
-
-- RNA-seq data processing
-- expression distribution assessment
-- PCA analysis
-- TPM/FPKM normalization
-- gene-length correction
-- AKR1A1 expression-based patient stratification
+The computational workflow reconstructs context-specific metabolic models and compares their metabolic behavior using multiple constraint-based modeling approaches.
 
 ---
 
-## Context-specific model reconstruction
+# Computational Workflow
 
-Genome-scale metabolic models were reconstructed using:
+The repository follows the complete computational pipeline from transcriptomic data to biological interpretation.
 
+```text
+RNA-seq datasets
+        │
+        ▼
+Data preprocessing
+(driverData.m)
+        │
+        ▼
+Context-specific model reconstruction
+(driverModel_withoutO2S.m)
+        │
+        ▼
+Medium constraints
+(setMediumConstraints*.m)
+        │
+        ▼
+Metabolic analyses
+(analysis.m)
+        │
+        ▼
+Flux sampling (HPC)
+        │
+        ▼
+Flux Sum analysis
+Flux Sampling analysis
+        │
+        ▼
+Visualization
+```
+
+---
+
+# Workflow Components
+
+## 1. Data preprocessing
+
+RNA-seq datasets are processed to generate discretized gene-expression matrices suitable for rFASTCORMICS reconstruction.
+
+This stage includes:
+
+- RNA-seq import
+- Gene annotation processing
+- Gene-length normalization
+- TPM/FPKM calculation
+- Expression discretization
+- PCA and descriptive statistics
+- AKR1A1-based patient stratification for TCGA datasets
+
+Main script:
+
+- `driverData.m`
+
+---
+
+## 2. Context-specific metabolic model reconstruction
+
+Context-specific genome-scale metabolic models are reconstructed using:
+
+- Recon3D
 - rFASTCORMICS
-- Recon3D human metabolic reconstruction
-- MATLAB R2019b
+- discretized RNA-seq expression
 
-Models were generated from:
+Models are generated for:
 
-- TCGA patient tumor RNA-seq data
-- AKR1A1-deficient cancer cell-line RNA-seq data
+- Cell-line consensus models
+- Cell-line sample-specific models
+- TCGA AKR1A1 ON/OFF consensus models
 
----
+Main script:
 
-## Medium constraints
-
-Experimental medium conditions were incorporated:
-
-**RPMI**
-
-- renal cancer models
-- 769-P cell-line models
-
-**DMEM**
-
-- liver cancer models
-- Huh7 cell-line models
+- `driverModel_withoutO2S.m`
 
 ---
 
-## Metabolic simulations
+## 3. Medium constraints
 
-The reconstructed models were analyzed using:
+Experimental culture media are incorporated into the reconstructed models before metabolic simulations.
+
+Media include:
+
+- RPMI (769-P models)
+- DMEM (Huh7 models)
+
+Separate scripts are provided for the standard and TCGA ON/OFF workflows.
+
+---
+
+## 4. Metabolic analyses
+
+The reconstructed models are analyzed using COBRA Toolbox methods including:
 
 - Flux Balance Analysis (FBA)
 - Flux Variability Analysis (FVA)
-- FVA interval similarity analysis
-- single-gene deletion simulations
-- drug perturbation simulations
-- flux sampling
-- flux-sum analysis
+- FVA similarity analysis
+- Single-gene deletion analysis
+- Drug perturbation simulations
+- Model similarity analyses
+- Pathway activity analyses
 
-Altered metabolic pathways were visualized using:
+Main script:
 
-- IDARE
-- Cytoscape
-
----
-
-# DATASETS
-
-## TCGA patient RNA-seq data
-
-Patient-derived metabolic models were reconstructed using TCGA RNA-seq data.
-
-GEO accession:
-
-```text
-GSE62944
-```
-
-Cancer cohorts analyzed:
-
-- **KIRC** — kidney renal clear cell carcinoma
-- **KIRP** — kidney renal papillary cell carcinoma
-- **KICH** — kidney chromophobe carcinoma
-- **LIHC** — liver hepatocellular carcinoma
-
-For each cancer type, tumors were stratified according to AKR1A1 mRNA expression.
-
-```text
-AKR1A1 HIGH / ON = upper expression quartile
-
-AKR1A1 LOW / OFF = lower expression quartile
-```
-
-Generated TCGA metabolic models:
-
-```text
-KIRC_ON      vs      KIRC_OFF
-
-KIRP_ON      vs      KIRP_OFF
-
-KICH_ON      vs      KICH_OFF
-
-LIHC_ON      vs      LIHC_OFF
-```
+- `analysis.m`
 
 ---
 
-## Cancer cell-line RNA-seq data
+## 5. Flux sampling
 
-Experimental AKR1A1-deficient models were generated from:
+Flux sampling explores the feasible solution space of each reconstructed model using ACHR sampling.
 
-- 769-P renal cancer cells
-- Huh7 hepatocellular carcinoma cells
+Sampling is performed on a High Performance Computing (HPC) system.
 
-Conditions:
+Both workflows are supported:
 
-```text
-Control
-
-AKR1A1-deficient clone sc1
-
-AKR1A1-deficient clone sc2
-
-AKR1A1-deficient clone sc12
-```
-
-GEO accessions:
-
-```text
-GSE310784
-
-GSE310828
-```
+- Standard cell-line models
+- TCGA ON/OFF models
 
 ---
 
-# PREREQUISITES
+## 6. Flux statistics
 
-## Software environment
+Sampled flux distributions are analyzed using two complementary approaches:
+
+### Flux Sum analysis
+
+Evaluates metabolite turnover differences between biological conditions using:
+
+- Mean Flux Sum
+- Log2 Fold Change
+- Signal-to-Noise Ratio (SNR)
+- Wilcoxon rank-sum statistics
+
+### Flux Sampling analysis
+
+Evaluates reaction-level differences directly from sampled reaction flux distributions using the same statistical framework.
+
+---
+
+## 7. Visualization
+
+Publication-quality figures are generated directly from the statistical output tables.
+
+Visualization scripts include:
+
+- Flux Sum figures
+- Flux Sampling figures
+- FVA similarity heatmaps
+- Pathway-specific figures
+- Combined manuscript figures
+
+Figures are exported as:
+
+- SVG
+- PDF
+
+---
+
+# Repository Organization
+
+```text
+project/
+
+├── data/
+│
+├── scripts/
+│
+├── results/
+│
+├── docs/
+│
+└── README.md
+```
+
+Detailed documentation for each component is provided within the corresponding directories.
+
+---
+
+# Software Requirements
 
 The workflow was developed and tested using:
 
@@ -189,15 +226,15 @@ The workflow was developed and tested using:
 - COBRA Toolbox
 - rFASTCORMICS
 - IBM ILOG CPLEX Optimizer
-- Recon3D metabolic reconstruction
+- Recon3D human metabolic reconstruction
 
 ---
 
-# INSTALLATION
+# Installation
 
 ## COBRA Toolbox
 
-Install COBRA Toolbox:
+Install following the official documentation:
 
 https://opencobra.github.io/cobratoolbox/latest/installation.html
 
@@ -207,7 +244,7 @@ Initialize in MATLAB:
 initCobraToolbox(false)
 ```
 
-Check installation:
+Verify installation:
 
 ```matlab
 which optimizeCbModel
@@ -216,20 +253,20 @@ which fluxVariability
 
 ---
 
-# rFASTCORMICS
+## rFASTCORMICS
 
-Install rFASTCORMICS:
+Install from:
 
 https://github.com/sysbiolux/rFASTCORMICS
 
-Add to MATLAB path:
+Add to the MATLAB path:
 
 ```matlab
 addpath(genpath('path_to_rFASTCORMICS'))
 savepath
 ```
 
-Check:
+Verify installation:
 
 ```matlab
 which fastcormics_RNAseq
@@ -237,17 +274,17 @@ which fastcormics_RNAseq
 
 ---
 
-# Solver
+## Solver
 
-CPLEX is recommended.
+IBM CPLEX is recommended.
 
-Activate solver:
+Activate the solver:
 
 ```matlab
 changeCobraSolver('ibm_cplex','all')
 ```
 
-Check:
+Verify:
 
 ```matlab
 getCobraSolver
@@ -255,156 +292,25 @@ getCobraSolver
 
 ---
 
-# WORKFLOW
+# Documentation
 
-The repository follows the complete computational pipeline from transcriptomic preprocessing to metabolic pathway interpretation.
+Additional documentation is provided within the repository:
 
-```text
-RNA-seq datasets
-        |
-        v
-Data preprocessing
-        |
-        v
-Genome-scale model reconstruction
-        |
-        v
-Medium constraints
-        |
-        v
-Metabolic simulations
-        |
-        v
-Flux sampling
-        |
-        v
-Flux-sum statistics
-        |
-        v
-IDARE/Cytoscape visualization
-```
+- **data/README.md**
+
+  Description of the datasets, GEO accessions, processed data, and directory organization.
+
+- **scripts/README.md**
+
+  Description of the MATLAB workflows, execution order, HPC sampling pipeline, statistical analyses, and visualization scripts.
+
+- **docs/USER_GUIDE.md**
+
+  Detailed reproducibility guide, execution instructions, expected inputs and outputs, and workflow validation.
 
 ---
 
-## 1. TCGA data preparation
-
-Purpose:
-
-- extract KIRC, KIRP, KICH, and LIHC datasets
-- classify patients according to AKR1A1 expression
-- generate HIGH/LOW groups
-
----
-
-## 2. Transcriptomic preprocessing
-
-Module:
-
-```text
-Data driver
-```
-
-Purpose:
-
-- import TCGA and cell-line RNA-seq data
-- process gene annotations
-- normalize expression values
-- generate rFASTCORMICS input files
-
----
-
-## 3. Genome-scale model reconstruction
-
-Module:
-
-```text
-Model driver
-```
-
-Purpose:
-
-- reconstruct context-specific metabolic models
-- generate patient-derived TCGA models
-- generate AKR1A1-deficient cell-line models
-
----
-
-## 4. Medium-specific constraints
-
-Module:
-
-```text
-Medium constraint workflow
-```
-
-Purpose:
-
-Apply experimentally defined medium constraints and validate model feasibility.
-
----
-
-## 5. Metabolic analysis
-
-Module:
-
-```text
-Universal analysis workflow
-```
-
-Includes:
-
-- FBA
-- FVA
-- FVA similarity analysis
-- single-gene deletion
-- drug perturbation analysis
-
----
-
-## 6. Flux sampling
-
-Purpose:
-
-Explore feasible metabolic flux distributions across biological conditions.
-
-Comparisons:
-
-- AKR1A1 HIGH vs LOW patient models
-- Control vs AKR1A1-deficient cell-line models
-
----
-
-## 7. Flux-sum statistics
-
-Includes:
-
-- metabolite turnover analysis
-- Wilcoxon statistical testing
-- signal-to-noise calculation
-- pathway prioritization
-
----
-
-## 8. Network visualization
-
-Differential metabolic pathways are visualized using:
-
-- IDARE
-- Cytoscape
-
----
-
-# DETAILED REPRODUCIBILITY GUIDE
-
-Complete MATLAB execution instructions, driver descriptions, configuration options, input/output files, and validation tests are available in:
-
-```text
-docs/USER_GUIDE.md
-```
-
----
-
-# CITATION
+# Citation
 
 If you use this workflow, please cite:
 
@@ -412,4 +318,10 @@ If you use this workflow, please cite:
 
 *Nature Communications*
 
-Associated Zenodo DOI will be provided with the archived release.
+A Zenodo DOI corresponding to the archived version of this repository will be added upon public release.
+
+---
+
+# License
+
+This repository is distributed for academic research and reproducibility purposes. Please cite the associated publication when using the code or derived analyses.
